@@ -22,9 +22,10 @@ HOME="/home/container"
 HOMEA="$HOME/linux/.apt"
 PROOT="./libraries/proot"
 ROOTFS="$HOMEA/rootfs"
+CONFIG_FILE="$HOME/config.ini"
 
 # Multisystem support
-DISTROS=("Debian Trixie" "Void Linux" "Arch Linux" "Alpine Linux" "Fedora 39")
+DISTROS=("Debian" "Void" "Arch" "Alpine" "Fedora")
 DISTRO_FILES=(
     "debian-trixie-x86_64-pd-v4.26.0.tar.xz"
     "void-x86_64-pd-v4.22.1.tar.xz"
@@ -79,7 +80,7 @@ function extract_or_download_rootfs() {
 
     if [[ ! -d "$PROOT_ROOT" ]]; then
         if [[ ! -f "$ROOTFS_FILE" ]]; then
-            echo -e "${YELLOW}${BOLD}[*] Rootfs file not found locally. Downloading from $DOWNLOAD_LINK ...${RESET}"
+            echo -e "${YELLOW}${BOLD}[*] Rootfs not found locally. Downloading from $DOWNLOAD_LINK ...${RESET}"
             curl -L --progress-bar -o "$ROOTFS_FILE" "$DOWNLOAD_LINK"
             if [[ $? -ne 0 ]]; then
                 echo -e "${RED}${BOLD}[!] Download failed. The file may be corrupted.${RESET}"
@@ -101,26 +102,84 @@ function extract_or_download_rootfs() {
         fi
         echo -e "${GREEN}${BOLD}[+] Rootfs successfully installed at $PROOT_ROOT.${RESET}"
     else
-        echo -e "${CYAN}${BOLD}[i] Rootfs is already extracted at $PROOT_ROOT. Continuing...${RESET}"
+        echo -e "${CYAN}${BOLD}[i] Rootfs already exists at $PROOT_ROOT. Continuing...${RESET}"
     fi
 }
+
+# ==============================
+# Load or set Nickname
+# ==============================
+function get_nick() {
+    if [[ -f "$CONFIG_FILE" ]]; then
+        USER_NICK=$(grep '^nick=' "$CONFIG_FILE" | cut -d'=' -f2)
+    fi
+
+    if [[ -z "$USER_NICK" ]]; then
+        echo -e "${MAGENTA}${BOLD}[?] Enter your nickname (default: Default):${RESET}"
+        read -p "> " USER_NICK
+        if [[ -z "$USER_NICK" ]]; then
+            USER_NICK="Default"
+        fi
+        echo "nick=$USER_NICK" > "$CONFIG_FILE"
+    fi
+}
+
+function save_nick() {
+    echo "nick=$1" > "$CONFIG_FILE"
+}
+
+# ==============================
+# Ask for nickname first
+# ==============================
+get_nick
 
 # ==============================
 # Interactive prompt function
 # ==============================
 function runcmd() {
     local PROOT_ROOT=$1
+    local DISTRO_NAME=$2
     local SHELL_BIN="/bin/bash"
 
-    # Alpine Linux usa /bin/sh
+    # Alpine Linux uses /bin/sh
     if [[ "$PROOT_ROOT" == *"alpine"* ]]; then
         SHELL_BIN="/bin/sh"
     fi
 
     echo -e "${CYAN}${BOLD}[i] Container ready. Enter commands below:${RESET}"
+    echo -e "${YELLOW}${BOLD}[!] Use :changenick to update your nickname during the session.${RESET}"
+
+    # Rainbowize function
+    function rainbowize() {
+        local input="$1"
+        local output=""
+        local i=0
+        for (( c=0; c<${#input}; c++ )); do
+            local CHAR="${input:$c:1}"
+            local COLOR=${RAINBOW[$((i % ${#RAINBOW[@]}))]}
+            output+="${COLOR}${BOLD}${CHAR}${RESET}"
+            ((i++))
+        done
+        echo -en "$output "
+    }
+
+    # Interactive loop
     while true; do
-        printf "${BOLD}${CYAN}Default@Container:~ ${RESET}"
+        local TEXT="${USER_NICK}@${DISTRO_NAME}:~"
+        rainbowize "$TEXT"
         read -r cmd
+
+        if [[ "$cmd" == ":changenick" ]]; then
+            echo -e "${MAGENTA}${BOLD}[?] New nickname:${RESET}"
+            read -p "> " NEWNICK
+            if [[ -n "$NEWNICK" ]]; then
+                USER_NICK="$NEWNICK"
+                save_nick "$USER_NICK"
+                echo -e "${GREEN}${BOLD}[+] Nickname updated to $USER_NICK${RESET}"
+            fi
+            continue
+        fi
+
         "$PROOT" -S "$PROOT_ROOT" $SHELL_BIN -c "$cmd"
     done
 }
@@ -153,4 +212,4 @@ PROOT_ROOT=${PROOT_ROOTS[$choice]}
 # ==============================
 extract_or_download_rootfs "$choice"
 echo -e "${CYAN}${BOLD}[i] Starting container...${RESET}"
-runcmd "$PROOT_ROOT"
+runcmd "$PROOT_ROOT" "${DISTROS[$choice]}"
