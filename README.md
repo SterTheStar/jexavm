@@ -1,6 +1,6 @@
 # **JexaVM**
 
-**JexaVM** is a Bash script to initialize custom Linux containers using
+A Bash script to initialize custom Linux containers using
 **proot**, with support for multiple distros, nickname customization,
 and rainbow prompts.
 
