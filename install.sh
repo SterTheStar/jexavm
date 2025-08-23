@@ -43,7 +43,7 @@ DISTRO_LINKS=(
 PROOT_ROOTS=(
     "$ROOTFS/debian-trixie-x86_64"
     "$ROOTFS/void-x86_64"
-    "$ROOTFS/arch-x86_64"
+    "$ROOTFS/archlinux-x86_64"
     "$ROOTFS/alpine-x86_64"
     "$ROOTFS/fedora-39-x86_64"
 )
