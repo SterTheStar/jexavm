@@ -134,22 +134,23 @@ function save_nick() {
 get_nick
 
 # ==============================
-# Interactive prompt function
+# Interactive prompt function with changenick and changepass
 # ==============================
 function runcmd() {
     local PROOT_ROOT=$1
     local DISTRO_NAME=$2
     local SHELL_BIN="/bin/bash"
 
-    # Alpine Linux uses /bin/sh
     if [[ "$PROOT_ROOT" == *"alpine"* ]]; then
         SHELL_BIN="/bin/sh"
     fi
 
-    echo -e "${CYAN}${BOLD}[i] Container ready. Enter commands below:${RESET}"
-    echo -e "${YELLOW}${BOLD}[!] Use :changenick to update your nickname during the session.${RESET}"
+    # Detect current user inside container
+    CURRENT_USER=$("$PROOT" -S "$PROOT_ROOT" $SHELL_BIN -c "whoami")
 
-    # Rainbowize function
+    echo -e "${CYAN}${BOLD}[i] Container ready. Enter commands below:${RESET}"
+    echo -e "${YELLOW}${BOLD}[!] Use :changenick or :changepass to update nickname or password.${RESET}"
+
     function rainbowize() {
         local input="$1"
         local output=""
@@ -163,12 +164,12 @@ function runcmd() {
         echo -en "$output "
     }
 
-    # Interactive loop
     while true; do
         local TEXT="${USER_NICK}@${DISTRO_NAME}:~"
         rainbowize "$TEXT"
         read -r cmd
 
+        # Change nickname
         if [[ "$cmd" == ":changenick" ]]; then
             echo -e "${MAGENTA}${BOLD}[?] New nickname:${RESET}"
             read -p "> " NEWNICK
@@ -180,6 +181,21 @@ function runcmd() {
             continue
         fi
 
+        # Change password for current user
+        if [[ "$cmd" == ":changepass" ]]; then
+            echo -e "${MAGENTA}${BOLD}[?] Enter new password for $CURRENT_USER:${RESET}"
+            read -s -p "> " NEWPASS
+            echo
+            if [[ -n "$NEWPASS" ]]; then
+                "$PROOT" -S "$PROOT_ROOT" $SHELL_BIN -c "echo '$CURRENT_USER:$NEWPASS' | chpasswd"
+                echo -e "${GREEN}${BOLD}[+] Password for $CURRENT_USER updated successfully!${RESET}"
+            else
+                echo -e "${RED}${BOLD}[!] Password cannot be empty.${RESET}"
+            fi
+            continue
+        fi
+
+        # Execute any other command
         "$PROOT" -S "$PROOT_ROOT" $SHELL_BIN -c "$cmd"
     done
 }
