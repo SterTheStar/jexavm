@@ -20,33 +20,74 @@ RAINBOW=($RED $YELLOW $GREEN $CYAN $BLUE $MAGENTA)
 # ==============================
 HOME="/home/container"
 HOMEA="$HOME/linux/.apt"
-PROOT="./libraries/proot"
+PROOT="./libraries/proot"   # default
 ROOTFS="$HOMEA/rootfs"
 CONFIG_FILE="$HOME/config.ini"
 
+# Detect architecture and choose correct proot binary
+ARCH=$(uname -m)
+echo -e "${CYAN}${BOLD}[i] Running on architecture: $ARCH${RESET}"
+if [[ "$ARCH" == "aarch64" ]]; then
+    PROOT="./libraries/prootarm64"
+else
+    PROOT="./libraries/proot"
+fi
+
+# Verifica se o binário existe e é executável
+if [[ ! -x "$PROOT" ]]; then
+    echo -e "${RED}${BOLD}[!] Proot binary not found or not executable: $PROOT${RESET}"
+    exit 1
+fi
+
 # Multisystem support
 DISTROS=("Debian" "Void" "Arch" "Alpine" "Fedora")
-DISTRO_FILES=(
-    "debian-trixie-x86_64-pd-v4.26.0.tar.xz"
-    "void-x86_64-pd-v4.22.1.tar.xz"
-    "arch-x86_64-pd-v4.22.1.tar.xz"
-    "alpine-x86_64-pd-v4.18.0.tar.xz"
-    "fedora-39-x86_64.tar.xz"
-)
-DISTRO_LINKS=(
-    "https://github.com/termux/proot-distro/releases/download/v4.26.0/debian-trixie-x86_64-pd-v4.26.0.tar.xz"
-    "https://github.com/termux/proot-distro/releases/download/v4.22.1/void-x86_64-pd-v4.22.1.tar.xz"
-    "https://github.com/termux/proot-distro/releases/download/v4.22.1/archlinux-x86_64-pd-v4.22.1.tar.xz"
-    "https://github.com/termux/proot-distro/releases/download/v4.18.0/alpine-x86_64-pd-v4.18.0.tar.xz"
-    "https://github.com/termux/proot-distro/releases/download/v4.27.0/fedora-x86_64-pd-v4.27.0.tar.xz"
-)
-PROOT_ROOTS=(
-    "$ROOTFS/debian-trixie-x86_64"
-    "$ROOTFS/void-x86_64"
-    "$ROOTFS/archlinux-x86_64"
-    "$ROOTFS/alpine-x86_64"
-    "$ROOTFS/fedora-39-x86_64"
-)
+
+# Define architecture-specific files and links
+if [[ "$ARCH" == "aarch64" ]]; then
+    DISTRO_FILES=(
+        "debian-trixie-aarch64-pd-v4.26.0.tar.xz"
+        "void-aarch64-pd-v4.22.1.tar.xz"
+        "archlinux-aarch64-pd-v4.22.1.tar.xz"
+        "alpine-aarch64-pd-v4.18.0.tar.xz"
+        "fedora-aarch64-pd-v4.24.0.tar.xz"
+    )
+    DISTRO_LINKS=(
+        "https://github.com/termux/proot-distro/releases/download/v4.26.0/debian-trixie-aarch64-pd-v4.26.0.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.22.1/void-aarch64-pd-v4.22.1.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.22.1/archlinux-aarch64-pd-v4.22.1.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.18.0/alpine-aarch64-pd-v4.18.0.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.24.0/fedora-aarch64-pd-v4.24.0.tar.xz"
+    )
+    PROOT_ROOTS=(
+        "$ROOTFS/debian-trixie-aarch64"
+        "$ROOTFS/void-aarch64"
+        "$ROOTFS/archlinux-aarch64"
+        "$ROOTFS/alpine-aarch64"
+        "$ROOTFS/fedora-aarch64"
+    )
+else
+    DISTRO_FILES=(
+        "debian-trixie-x86_64-pd-v4.26.0.tar.xz"
+        "void-x86_64-pd-v4.22.1.tar.xz"
+        "arch-x86_64-pd-v4.22.1.tar.xz"
+        "alpine-x86_64-pd-v4.18.0.tar.xz"
+        "fedora-39-x86_64.tar.xz"
+    )
+    DISTRO_LINKS=(
+        "https://github.com/termux/proot-distro/releases/download/v4.26.0/debian-trixie-x86_64-pd-v4.26.0.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.22.1/void-x86_64-pd-v4.22.1.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.22.1/archlinux-x86_64-pd-v4.22.1.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.18.0/alpine-x86_64-pd-v4.18.0.tar.xz"
+        "https://github.com/termux/proot-distro/releases/download/v4.27.0/fedora-x86_64-pd-v4.27.0.tar.xz"
+    )
+    PROOT_ROOTS=(
+        "$ROOTFS/debian-trixie-x86_64"
+        "$ROOTFS/void-x86_64"
+        "$ROOTFS/archlinux-x86_64"
+        "$ROOTFS/alpine-x86_64"
+        "$ROOTFS/fedora-39-x86_64"
+    )
+fi
 
 mkdir -p "$HOMEA"
 
