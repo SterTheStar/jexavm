@@ -85,7 +85,7 @@ else
         "$ROOTFS/void-x86_64"
         "$ROOTFS/archlinux-x86_64"
         "$ROOTFS/alpine-x86_64"
-        "$ROOTFS/fedora-39-x86_64"
+        "$ROOTFS/fedora-x86_64"
     )
 fi
 
