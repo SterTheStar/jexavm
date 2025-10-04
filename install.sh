@@ -18,7 +18,7 @@ RAINBOW=($RED $YELLOW $GREEN $CYAN $BLUE $MAGENTA)
 # ==============================
 # Settings
 # ==============================
-HOME="/home/container"
+HOME="/data/container"
 HOMEA="$HOME/linux/.apt"
 PROOT="./libraries/proot"   # default
 ROOTFS="$HOMEA/rootfs"
@@ -237,7 +237,7 @@ function runcmd() {
         fi
 
         # Execute any other command
-        "$PROOT" -S "$PROOT_ROOT" $SHELL_BIN -c "$cmd"
+        "$PROOT" -S "$PROOT_ROOT" --cwd=/root $SHELL_BIN -c "$cmd"
     done
 }
 
